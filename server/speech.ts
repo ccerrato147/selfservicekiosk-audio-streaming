@@ -1,5 +1,3 @@
-
-
 const speechToText = require('@google-cloud/speech').v1p1beta1;
 const textToSpeech = require('@google-cloud/text-to-speech').v1beta1;
 
