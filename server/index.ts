@@ -53,9 +53,9 @@ export class App {
     private createApp(): void {
         this.app = express();
         this.app.use(cors());
-        this.app.set('trust proxy', true);
+        //this.app.set('trust proxy', true);
   
-        this.app.use(function(req: any, res: any, next: any) {
+        /* this.app.use(function(req: any, res: any, next: any) {
             res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
 
             if (req.secure) {
@@ -69,10 +69,8 @@ export class App {
                     next();
                 }
             }
-
-console.log()
-        });
-        this.app.use('/', express.static(path.join(__dirname, '../dist/public')));
+        }); */
+        //this.app.use('/', express.static(path.join(__dirname, '../dist/public')));
     }
 
     private createServer(): void {
@@ -84,67 +82,98 @@ console.log()
     }
 
     private listen(): void {
-        let me = this;
-        this.server.listen(App.PORT, () => {
-            console.log('Running server on port: %s', App.PORT);
+        let NewSocket = socketIo({
+            transports: ['websocket'],
         });
+        NewSocket.attach(8080);
+        NewSocket.on('connection', (socket) => {
+            socket.on('test-text', function(){
+                console.log("Inner text received!");
+                socket.emit('hello');
+            });
 
-        this.io.on('connect', (client: any) => {
-            var me = this;
-            me.socketClient = client;
-            console.log(`Client connected [id=${client.id}]`);
-            client.emit('server_setup', `Server connected [id=${client.id}]`);
-
-            // simple DF detectIntent call
-            ss(client).on('stream-speech', async function (stream: any, data: any) {
-                // get the file name
-                const filename = path.basename(data.name);
-                // get the target language
-                const targetLang = data.language;
-
-                stream.pipe(fs.createWriteStream(filename));
-                speech.speechStreamToText(stream, targetLang, async function(transcribeObj: any){
-         
-                    // console.log(transcribeObj.words[0].speakerTag);
-                    // don't want to transcribe the tts output
-                    // if(transcribeObj.words[0].speakerTag > 1) return;
-
-                    me.socketClient.emit('transcript', transcribeObj.transcript);
-                
-                    // translate the transcript if the target language is not the same 
-                    // as the Dialogflow base base language.
-                    let response = transcribeObj.transcript;
-                    if (targetLang != me.baseLang){
-                        response = await translate.translate(transcribeObj.transcript, me.baseLang);
-                        response = response.translatedText;
-                    }
-
-                    // Match the intent
-                    const intentMatch = await dialogflow.detectIntent(response);
-                        
-                    // translate the fulfillment text if the target language is not the same
-                    // as the Dialogflow base language.
-                    let intentResponse = intentMatch.FULFILLMENT_TEXT;
-                    if (targetLang != me.baseLang){
-                        intentResponse = await translate.translate(intentMatch.FULFILLMENT_TEXT, targetLang);
-                        intentResponse = intentResponse.translatedText;
-                        intentMatch.TRANSLATED_FULFILLMENT = intentResponse;
-                        //console.log(intentMatch);
-                        me.socketClient.emit('results', intentMatch);
-                    } else {
-                        intentMatch.TRANSLATED_FULFILLMENT = intentMatch.FULFILLMENT_TEXT;
-                        me.socketClient.emit('results', intentMatch);
-                    }
-
-                    // TTS the answer
-                    speech.textToSpeech(intentResponse, targetLang).then(function(audio: AudioBuffer){
-                        me.socketClient.emit('audio', audio);
-                    }).catch(function(e: any) { console.log(e); })
-                
-                });
-            
+            socket.on('beep', function(){
+                console.log("beep received!");
+                socket.emit('boop');
             });
         });
+        let me = this;
+        // this.server.listen(App.PORT, () => {
+        //     console.log('Running server on port: %s', App.PORT);
+        // });
+
+        // this.io.on('connect', (client: any) => {
+        //     var me = this;
+        //     me.socketClient = client;
+        //     console.log(`New client connected [id=${client.id}]`);
+        //     client.emit('server_setup', `Server connected [id=${client.id}]`);
+
+        //     client.on('test-text', function () {
+        //         console.log("test-text");
+        //         client.emit('hello');
+        //     });
+
+        //     /* client.on('test-voice', function (stream: any, data: any) {
+        //         console.log('test voice stream', stream);
+        //         console.log('test voice data', data);
+        //     }); */
+
+        //     // simple DF detectIntent call
+        //     /* ss(client).on('stream-speech', async function (stream: any, data: any) {
+        //         // get the file name
+        //         const filename = path.basename(data.name);
+        //         // get the target language
+        //         const targetLang = data.language;
+
+        //         stream.pipe(fs.createWriteStream(filename));
+        //         speech.speechStreamToText(stream, targetLang, async function(transcribeObj: any){
+         
+        //             // console.log(transcribeObj.words[0].speakerTag);
+        //             // don't want to transcribe the tts output
+        //             // if(transcribeObj.words[0].speakerTag > 1) return;
+
+        //             me.socketClient.emit('transcript', transcribeObj.transcript);
+                
+        //             // translate the transcript if the target language is not the same 
+        //             // as the Dialogflow base base language.
+        //             let response = transcribeObj.transcript;
+        //             if (targetLang != me.baseLang){
+        //                 response = await translate.translate(transcribeObj.transcript, me.baseLang);
+        //                 response = response.translatedText;
+        //             }
+
+        //             // Match the intent
+        //             const intentMatch = await dialogflow.detectIntent(response);
+                        
+        //             // translate the fulfillment text if the target language is not the same
+        //             // as the Dialogflow base language.
+        //             let intentResponse = intentMatch.FULFILLMENT_TEXT;
+        //             if (targetLang != me.baseLang){
+        //                 intentResponse = await translate.translate(intentMatch.FULFILLMENT_TEXT, targetLang);
+        //                 intentResponse = intentResponse.translatedText;
+        //                 intentMatch.TRANSLATED_FULFILLMENT = intentResponse;
+        //                 //console.log(intentMatch);
+        //                 me.socketClient.emit('results', intentMatch);
+        //             } else {
+        //                 intentMatch.TRANSLATED_FULFILLMENT = intentMatch.FULFILLMENT_TEXT;
+        //                 me.socketClient.emit('results', intentMatch);
+        //             }
+
+        //             // TTS the answer
+        //             speech.textToSpeech(intentResponse, targetLang).then(function(audio: AudioBuffer){
+        //                 me.socketClient.emit('audio', audio);
+        //             }).catch(function(e: any) { console.log(e); })
+                
+        //         });
+            
+        //     }); */
+        // });
+
+        this.io.on('test-voice', () => {
+            console.log("voice event!");
+        });
+
+        //this.io.on('connect', (client: any) => {});
     }
 }
 
