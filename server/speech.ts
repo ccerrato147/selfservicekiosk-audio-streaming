@@ -15,9 +15,9 @@ export class Speech {
     private sttRequest: LooseObject;
       
     constructor() {
-        this.encoding = process.env.SPEECH_ENCODING;
-        this.sampleRateHertz = parseInt(process.env.SAMPLE_RATE_HERZ);
-        this.ssmlGender = process.env.SSML_GENDER;
+        this.encoding = "LINEAR16"; //process.env.SPEECH_ENCODING;
+        this.sampleRateHertz = 44100; //parseInt(process.env.SAMPLE_RATE_HERZ);
+        this.ssmlGender = "MALE"; //process.env.SSML_GENDER;
         this.setupSpeech();
     }
 
@@ -57,17 +57,22 @@ export class Speech {
     }
 
     async speechToText(audio: Buffer, lang: string) {
+      try {
         this.sttRequest.config.languageCode = lang;
         this.sttRequest.audio = {
             content: audio,
         };
-
         const responses = await this.stt.recognize(this.sttRequest);
         const results = responses[0].results[0].alternatives[0];
         return {
-            'transcript' : results.transcript,
-            'detectLang': lang
+          'transcript' : results.transcript,
+          'detectLang': lang
         };
+      }
+      catch (error) {
+          console.log('Error in speech to text:', error);
+          return {};
+      }
     }
 
     async speechStreamToText(stream: any, lang: string, cb: Function) { 

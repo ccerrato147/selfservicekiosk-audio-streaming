@@ -56,6 +56,8 @@ There's a [presentation](https://speakerdeck.com/savelee/implementing-a-custom-a
 
 4. Download the service account key.
 
+### RECURRENT START: run these every time you restart your system.
+
 5. Assign the key to environment var: **GOOGLE_APPLICATION_CREDENTIALS**
 
  LINUX/MAC
@@ -64,6 +66,8 @@ There's a [presentation](https://speakerdeck.com/savelee/implementing-a-custom-a
  `set GOOGLE_APPLICATION_CREDENTIALS=c:\keys\key-ssd.json`
 
 6. Login: `gcloud auth login`
+
+### RECURRENT END
 
 7. Open **env.txt**, change the environment variables and rename the file to **.env**
 

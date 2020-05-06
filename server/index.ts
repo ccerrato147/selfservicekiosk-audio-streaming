@@ -81,15 +81,31 @@ export class App {
         this.io = socketIo(this.server);
     }
 
-    private listen(): void {
+    // private bufferToBase64(buf: Float32Array): String {
+    //     var binstr = Array.prototype.map.call(buf, (ch: any) => {
+    //         return String.fromCharCode(ch);
+    //     }).join('');
+    //     return btoa(binstr);
+    // }
+
+    async listen() {
         let NewSocket = socketIo({
             transports: ['websocket'],
         });
         NewSocket.attach(8080);
         NewSocket.on('connection', (socket) => {
-            socket.on('test-text', function(){
-                console.log("Inner text received!");
-                socket.emit('hello');
+            socket.on('stt', (speechAudio) => {
+                speech.speechToText( Buffer.from(speechAudio.audio, 'base64'), process.env.LANGUAGE_CODE).then(async (result) => {
+                    console.log("Audio", result.transcript);
+                    // Match the intent
+                    const intentMatch = await dialogflow.detectIntent(result.transcript);
+                    console.log("NLP:", intentMatch);
+                    speech.textToSpeech(intentMatch.FULFILLMENT_TEXT, process.env.LANGUAGE_CODE).then((audioBuf: Buffer) => {
+                            let base64: String = audioBuf.toString('base64');
+                            console.log("Audio base64:", base64);
+                            socket.emit('ResponseBase64', { intentMatch, base64 } );
+                        }).catch((e: any) => { console.log(e); })
+                });
             });
 
             socket.on('beep', function(){
@@ -97,7 +113,7 @@ export class App {
                 socket.emit('boop');
             });
         });
-        let me = this;
+        //let me = this;
         // this.server.listen(App.PORT, () => {
         //     console.log('Running server on port: %s', App.PORT);
         // });
@@ -108,18 +124,8 @@ export class App {
         //     console.log(`New client connected [id=${client.id}]`);
         //     client.emit('server_setup', `Server connected [id=${client.id}]`);
 
-        //     client.on('test-text', function () {
-        //         console.log("test-text");
-        //         client.emit('hello');
-        //     });
-
-        //     /* client.on('test-voice', function (stream: any, data: any) {
-        //         console.log('test voice stream', stream);
-        //         console.log('test voice data', data);
-        //     }); */
-
         //     // simple DF detectIntent call
-        //     /* ss(client).on('stream-speech', async function (stream: any, data: any) {
+        //     ss(client).on('stream-speech', async function (stream: any, data: any) {
         //         // get the file name
         //         const filename = path.basename(data.name);
         //         // get the target language
@@ -165,15 +171,8 @@ export class App {
         //             }).catch(function(e: any) { console.log(e); })
                 
         //         });
-            
-        //     }); */
+        //     });
         // });
-
-        this.io.on('test-voice', () => {
-            console.log("voice event!");
-        });
-
-        //this.io.on('connect', (client: any) => {});
     }
 }
 
