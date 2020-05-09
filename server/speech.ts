@@ -98,8 +98,20 @@ export class Speech {
         this.ttsRequest.input = { text };
         this.ttsRequest.voice.languageCode = lang;
         this.setSpeechTweaks(lang);
-        const responses = await this.tts.synthesizeSpeech(this.ttsRequest);
-        return responses[0].audioContent;  
+        // Trying new object
+        // sampleRateHertz: 44100
+        const request = {
+          input: {text: text},
+          // Select the language and SSML voice gender (optional)
+          voice: {languageCode: lang, ssmlGender: 'FEMALE', sampleRateHertz: 44100},
+          // select the type of audio encoding
+          audioConfig: {audioEncoding: 'LINEAR16'},
+        }
+        console.log('tts request:', request);
+        //const responses = await this.tts.synthesizeSpeech(this.ttsRequest);
+        const [responses] = await this.tts.synthesizeSpeech(request);
+        //return responses[0].audioContent;  
+        return responses;
     }
 
 

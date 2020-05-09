@@ -27,6 +27,7 @@ import * as express from 'express';
 import * as cors from 'cors';
 import * as sourceMapSupport from 'source-map-support';
 import * as fs from 'fs';
+import * as util from 'util';
 
 const ss = require('socket.io-stream');
 
@@ -100,9 +101,27 @@ export class App {
                     // Match the intent
                     const intentMatch = await dialogflow.detectIntent(result.transcript);
                     console.log("NLP:", intentMatch);
-                    speech.textToSpeech(intentMatch.FULFILLMENT_TEXT, process.env.LANGUAGE_CODE).then((audioBuf: Buffer) => {
-                            let base64: String = audioBuf.toString('base64');
-                            console.log("Audio base64:", base64);
+                    speech.textToSpeech(intentMatch.FULFILLMENT_TEXT, 'es-ES').then(async (response: any) => {
+                            // const convertoFloat32ToInt16 = (buffer: any) => {
+                            //     var l = buffer.length;
+                            //     var buf = new Int16Array(l/3);
+                            //     while (l--) {
+                            //         let s = Math.max(-1, Math.min(1, samples[l]));
+                            //         buf[l] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+                            //     }
+                            //     return buf.buffer;
+                            //   }
+                            // let base64: String = convertoFloat32ToInt16(audioBuf).toString('base64');
+                            const writeFile = util.promisify(fs.writeFile);
+                            //let fileName = 'output '+ Date.now() +'.mp3';
+                            let fileName = 'output '+ Date.now() +'.wav';
+                            await writeFile(fileName, response.audioContent, 'binary');
+                            console.log('Audio content written to file: ' + fileName);
+                            //let base64: String = response.audioContent.toString('base64');
+                            //let base64: String = btoa(unescape(encodeURIComponent(response.audioContent)));
+                            let base64: String = Buffer.from(response.audioContent, 'binary').toString('base64');
+                            //let base64: String = Buffer.from(response.audioContent, 'latin1').toString('base64');
+                            //let base64: String = Buffer.from(response.audioContent, 'utf8').toString('base64');
                             socket.emit('ResponseBase64', { intentMatch, base64 } );
                         }).catch((e: any) => { console.log(e); })
                 });

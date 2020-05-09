@@ -63,7 +63,7 @@ There's a [presentation](https://speakerdeck.com/savelee/implementing-a-custom-a
  LINUX/MAC
  `export GOOGLE_APPLICATION_CREDENTIALS=/path/to/service_account.json`
  WIN
- `set GOOGLE_APPLICATION_CREDENTIALS=c:\keys\key-ssd.json`
+ `set GOOGLE_APPLICATION_CREDENTIALS=C:\keys\key-ssd.json`
 
 6. Login: `gcloud auth login`
 
