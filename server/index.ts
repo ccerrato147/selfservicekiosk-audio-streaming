@@ -49,6 +49,16 @@ export class App {
         this.listen();
 
         this.baseLang = process.env.LANGUAGE_CODE;
+
+        speech.textToSpeech("hoy hay 7 discrepancias de ventas total, 5 activas, 1 en demora", 'es-ES').then(this.saveWavFile);
+        speech.textToSpeech("Listo. Este es el proceso 'Cuadre de Ventas Diarias'", 'es-ES').then(this.saveWavFile);
+        speech.textToSpeech("Bienvenido Carlos", 'es-ES').then(this.saveWavFile);
+    }
+
+    async saveWavFile(response: any){
+        const writeFile = util.promisify(fs.writeFile);
+        let fileName = 'output '+ Date.now() +'.wav';
+        await writeFile(fileName, response.audioContent, 'binary');
     }
 
     private createApp(): void {
@@ -100,30 +110,15 @@ export class App {
                     console.log("Audio", result.transcript);
                     // Match the intent
                     const intentMatch = await dialogflow.detectIntent(result.transcript);
-                    console.log("NLP:", intentMatch);
-                    speech.textToSpeech(intentMatch.FULFILLMENT_TEXT, 'es-ES').then(async (response: any) => {
-                            // const convertoFloat32ToInt16 = (buffer: any) => {
-                            //     var l = buffer.length;
-                            //     var buf = new Int16Array(l/3);
-                            //     while (l--) {
-                            //         let s = Math.max(-1, Math.min(1, samples[l]));
-                            //         buf[l] = s < 0 ? s * 0x8000 : s * 0x7FFF;
-                            //     }
-                            //     return buf.buffer;
-                            //   }
-                            // let base64: String = convertoFloat32ToInt16(audioBuf).toString('base64');
+                    socket.emit('response', { intentMatch } );
+                    /* speech.textToSpeech(intentMatch.FULFILLMENT_TEXT, 'es-ES').then(async (response: any) => {
                             const writeFile = util.promisify(fs.writeFile);
-                            //let fileName = 'output '+ Date.now() +'.mp3';
                             let fileName = 'output '+ Date.now() +'.wav';
                             await writeFile(fileName, response.audioContent, 'binary');
                             console.log('Audio content written to file: ' + fileName);
-                            //let base64: String = response.audioContent.toString('base64');
-                            //let base64: String = btoa(unescape(encodeURIComponent(response.audioContent)));
                             let base64: String = Buffer.from(response.audioContent, 'binary').toString('base64');
-                            //let base64: String = Buffer.from(response.audioContent, 'latin1').toString('base64');
-                            //let base64: String = Buffer.from(response.audioContent, 'utf8').toString('base64');
                             socket.emit('ResponseBase64', { intentMatch, base64 } );
-                        }).catch((e: any) => { console.log(e); })
+                        }).catch((e: any) => { console.log(e); }) */
                 });
             });
 
@@ -132,66 +127,6 @@ export class App {
                 socket.emit('boop');
             });
         });
-        //let me = this;
-        // this.server.listen(App.PORT, () => {
-        //     console.log('Running server on port: %s', App.PORT);
-        // });
-
-        // this.io.on('connect', (client: any) => {
-        //     var me = this;
-        //     me.socketClient = client;
-        //     console.log(`New client connected [id=${client.id}]`);
-        //     client.emit('server_setup', `Server connected [id=${client.id}]`);
-
-        //     // simple DF detectIntent call
-        //     ss(client).on('stream-speech', async function (stream: any, data: any) {
-        //         // get the file name
-        //         const filename = path.basename(data.name);
-        //         // get the target language
-        //         const targetLang = data.language;
-
-        //         stream.pipe(fs.createWriteStream(filename));
-        //         speech.speechStreamToText(stream, targetLang, async function(transcribeObj: any){
-         
-        //             // console.log(transcribeObj.words[0].speakerTag);
-        //             // don't want to transcribe the tts output
-        //             // if(transcribeObj.words[0].speakerTag > 1) return;
-
-        //             me.socketClient.emit('transcript', transcribeObj.transcript);
-                
-        //             // translate the transcript if the target language is not the same 
-        //             // as the Dialogflow base base language.
-        //             let response = transcribeObj.transcript;
-        //             if (targetLang != me.baseLang){
-        //                 response = await translate.translate(transcribeObj.transcript, me.baseLang);
-        //                 response = response.translatedText;
-        //             }
-
-        //             // Match the intent
-        //             const intentMatch = await dialogflow.detectIntent(response);
-                        
-        //             // translate the fulfillment text if the target language is not the same
-        //             // as the Dialogflow base language.
-        //             let intentResponse = intentMatch.FULFILLMENT_TEXT;
-        //             if (targetLang != me.baseLang){
-        //                 intentResponse = await translate.translate(intentMatch.FULFILLMENT_TEXT, targetLang);
-        //                 intentResponse = intentResponse.translatedText;
-        //                 intentMatch.TRANSLATED_FULFILLMENT = intentResponse;
-        //                 //console.log(intentMatch);
-        //                 me.socketClient.emit('results', intentMatch);
-        //             } else {
-        //                 intentMatch.TRANSLATED_FULFILLMENT = intentMatch.FULFILLMENT_TEXT;
-        //                 me.socketClient.emit('results', intentMatch);
-        //             }
-
-        //             // TTS the answer
-        //             speech.textToSpeech(intentResponse, targetLang).then(function(audio: AudioBuffer){
-        //                 me.socketClient.emit('audio', audio);
-        //             }).catch(function(e: any) { console.log(e); })
-                
-        //         });
-        //     });
-        // });
     }
 }
 

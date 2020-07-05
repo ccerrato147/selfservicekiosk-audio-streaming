@@ -107,8 +107,6 @@ export class Speech {
           // select the type of audio encoding
           audioConfig: {audioEncoding: 'LINEAR16'},
         }
-        console.log('tts request:', request);
-        //const responses = await this.tts.synthesizeSpeech(this.ttsRequest);
         const [responses] = await this.tts.synthesizeSpeech(request);
         //return responses[0].audioContent;  
         return responses;
